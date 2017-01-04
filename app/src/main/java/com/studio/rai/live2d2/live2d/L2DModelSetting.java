@@ -98,6 +98,10 @@ public class L2DModelSetting
                 JSONObject object = motionGroup.getJSONObject(j);
                 String motionPath = modelName + "/" +object.getString("file");
                 this.motions.put(key+j, motionPath);
+                if (!object.has("sound"))
+                    continue;
+                String soundPath = modelName + "/" +object.getString("sound");
+                this.sounds.put(key+j, soundPath);
             }
         }
     }

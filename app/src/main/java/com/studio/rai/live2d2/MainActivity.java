@@ -47,7 +47,9 @@ public class MainActivity extends Activity
 
     private void setupLive2DModels() {
         try {
-            mModelSetting = new L2DModelSetting(this, "izumi_illust");
+            //String modelName = "izumi_illust";
+            String modelName = "hibiki";
+            mModelSetting = new L2DModelSetting(this, modelName);
             mModel = new MyL2DModel(this, mModelSetting);
 
             mLive2DRender = new Live2DRender();
@@ -60,14 +62,14 @@ public class MainActivity extends Activity
     }
 
     public void motions(View view) {
-        String[] keys = mModelSetting.getMotions().keySet().toArray(new String[]{});
+        final String[] keys = mModelSetting.getMotions().keySet().toArray(new String[]{});
 
         AlertDialog.Builder dialog = new AlertDialog.Builder(this);
         dialog.setTitle("Motions")
                 .setItems(keys, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        mModel.showMotion(which);
+                        mModel.showMotion(which, keys[which]);
                     }
                 })
                 .show();

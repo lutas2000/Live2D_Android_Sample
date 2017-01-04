@@ -2,12 +2,16 @@ package com.studio.rai.live2d2.live2d;
 
 import android.content.Context;
 import android.content.res.AssetManager;
+import android.media.AudioManager;
+import android.media.SoundPool;
+import android.os.Build;
 import android.util.Log;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import javax.microedition.khronos.opengles.GL10;
@@ -41,16 +45,25 @@ public class MyL2DModel
     private final float minAngle = -30f;
     private final float maxAngle = 30f;
     //Sound
+    private SoundPool mSoundPool;
+    private Map<String,Integer> sounds;
 
     public MyL2DModel(Context context, L2DModelSetting setting) {
         this.context = context;
         mSetting = setting;
+        sounds = new LinkedHashMap<>();
         assetManager = context.getAssets();
         mMotionMgr = new MotionQueueManager();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            mSoundPool = new SoundPool.Builder().build();
+        } else {
+            mSoundPool = new SoundPool(1, AudioManager.STREAM_MUSIC, 5);
+        }
 
         setupModel();
         setupPhysics();
         setupMotions();
+        setupSounds();
     }
 
     private void setupModel() {
@@ -92,11 +105,33 @@ public class MyL2DModel
         }
     }
 
+    private void setupSounds() {
+        Map<String,String> soundPaths = mSetting.getSounds();
+
+        Iterator<String> iterator = soundPaths.keySet().iterator();
+        while (iterator.hasNext()) {
+            String key = iterator.next();
+            String path = soundPaths.get(key);
+            try {
+                int soundID = mSoundPool.load(assetManager.openFd(path), 1);
+                sounds.put(key, soundID);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     //========================== Public Method =====================================================
 
-    public void showMotion(int index) {
+    public void showMotion(int index, String key) {
         if (mMotionMgr.isFinished())
             mMotionMgr.startMotion(mMotions[index], false);
+
+        if (!sounds.containsKey(key))
+            return;
+        int soundID = sounds.get(key);
+        Log.d(TAG, "play sound: "+ soundID);
+        mSoundPool.play(soundID, 1f, 1f, 0, 0, 1f);
     }
 
     public void test(float angle) {
