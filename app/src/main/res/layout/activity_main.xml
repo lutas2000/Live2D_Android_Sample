@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.studio.rai.live2d2.MainActivity">
+
+    <android.opengl.GLSurfaceView
+        android:id="@+id/main_glSurface"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <Button
+        android:id="@+id/main_btn_motion"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="motions"
+        android:onClick="motions"/>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@id/main_btn_motion"
+        android:text="test"
+        android:onClick="test"/>
+</RelativeLayout>
