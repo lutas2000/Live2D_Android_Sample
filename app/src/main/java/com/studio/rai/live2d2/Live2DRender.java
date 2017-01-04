@@ -15,29 +15,28 @@ import javax.microedition.khronos.opengles.GL10;
 
 public class Live2DRender implements GLSurfaceView.Renderer
 {
-    private int mModelIndex = 0;
-    private ArrayList<MyL2DModel> mModelManagers;
+    private MyL2DModel mModelManager;
 
     public Live2DRender() {
-        mModelManagers = new ArrayList<>();
+        //mModelManagers = new ArrayList<>();
     }
 
-    public void addModel(MyL2DModel modelManager) {
-        mModelManagers.add(modelManager);
+    public void setModel(MyL2DModel modelManager) {
+        mModelManager = modelManager;
     }
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-        mModelManagers.get(mModelIndex).onSurfaceCreated(gl);
+        mModelManager.onSurfaceCreated(gl);
     }
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
-        mModelManagers.get(mModelIndex).onSurfaceChanged(gl, width, height);
+        mModelManager.onSurfaceChanged(gl, width, height);
     }
 
     @Override
     public void onDrawFrame(GL10 gl) {
-        mModelManagers.get(mModelIndex).onDrawFrame(gl);
+        mModelManager.onDrawFrame(gl);
     }
 }

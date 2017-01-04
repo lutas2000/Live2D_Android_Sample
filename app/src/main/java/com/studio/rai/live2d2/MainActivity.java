@@ -5,12 +5,16 @@ import android.content.DialogInterface;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 
+import com.studio.rai.live2d2.live2d.L2DModelSetting;
 import com.studio.rai.live2d2.live2d.MyL2DModel;
+
+import org.json.JSONException;
+
+import java.io.IOException;
 
 import jp.live2d.Live2D;
 
@@ -18,7 +22,10 @@ public class MainActivity extends Activity
 {
     private static final String TAG = MainActivity.class.getSimpleName();
 
+    private GLSurfaceView mGlSurfaceView;
+
     private Live2DRender mLive2DRender;
+    private L2DModelSetting mModelSetting;
     private MyL2DModel mModel;
 
     @Override
@@ -32,25 +39,32 @@ public class MainActivity extends Activity
     }
 
     private void initView() {
-        GLSurfaceView glSurfaceView = (GLSurfaceView) findViewById(R.id.main_glSurface);
+        mGlSurfaceView = (GLSurfaceView) findViewById(R.id.main_glSurface);
 
         setupLive2DModels();
-        glSurfaceView.setRenderer(mLive2DRender);
+        mGlSurfaceView.setRenderer(mLive2DRender);
     }
 
     private void setupLive2DModels() {
-        mModel = new MyL2DModel(this);
-        mModel.setupModel("hibiki/hibiki.moc", "hibiki/hibiki.2048");
-        mModel.setupMotions("hibiki/hibiki.physics.json", "hibiki/motions");
+        try {
+            mModelSetting = new L2DModelSetting(this, "izumi_illust");
+            mModel = new MyL2DModel(this, mModelSetting);
 
-        mLive2DRender = new Live2DRender();
-        mLive2DRender.addModel(mModel);
+            mLive2DRender = new Live2DRender();
+            mLive2DRender.setModel(mModel);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void motions(View view) {
+        String[] keys = mModelSetting.getMotions().keySet().toArray(new String[]{});
+
         AlertDialog.Builder dialog = new AlertDialog.Builder(this);
         dialog.setTitle("Motions")
-                .setItems(mModel.getMotions(), new DialogInterface.OnClickListener() {
+                .setItems(keys, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         mModel.showMotion(which);
@@ -61,6 +75,8 @@ public class MainActivity extends Activity
 
     float angle = -30f;
     public void test(View view) {
+        //mModel.showTexture();
+
         /*
         Log.d(TAG, angle+"");
         mModel.test(angle);
@@ -71,9 +87,6 @@ public class MainActivity extends Activity
     public boolean onTouchEvent(MotionEvent event) {
         int x = (int)event.getX();
         int y = (int)event.getY();
-
-        //Log.d(TAG, "x " + x);
-        //Log.d(TAG, "y " + y);
 
         if (event.getAction() == MotionEvent.ACTION_MOVE)
             mModel.onTouch(x, y);

@@ -2,9 +2,13 @@ package com.studio.rai.live2d2.live2d;
 
 import android.content.Context;
 import android.content.res.AssetManager;
+import android.util.Log;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.Map;
 
 import javax.microedition.khronos.opengles.GL10;
 
@@ -24,13 +28,10 @@ public class MyL2DModel
     private Context context;
     private AssetManager assetManager;
 
+    private L2DModelSetting mSetting;
     //model
     private Live2DModelAndroid mLive2DModel;
-    private String mModelPath;
-    private String mTextureDirPath;
-    private String[] mTexturePaths;
     //motion
-    private String[] mMotionList;
     private Live2DMotion[] mMotions;
     private MotionQueueManager mMotionMgr;
     private L2DPhysics physics;
@@ -41,43 +42,30 @@ public class MyL2DModel
     private final float maxAngle = 30f;
     //Sound
 
-
-    public MyL2DModel(Context context) {
+    public MyL2DModel(Context context, L2DModelSetting setting) {
         this.context = context;
+        mSetting = setting;
         assetManager = context.getAssets();
         mMotionMgr = new MotionQueueManager();
+
+        setupModel();
+        setupPhysics();
+        setupMotions();
     }
 
-    public void setupModel(String modelPath, String textureDirPath) {
-        mModelPath = modelPath;
-        mTextureDirPath = textureDirPath;
+    private void setupModel() {
         try {
-            mTexturePaths = assetManager.list(textureDirPath);
+            InputStream in = context.getAssets().open(mSetting.getModel()) ;
+            mLive2DModel = Live2DModelAndroid.loadModel(in) ;
+            in.close() ;
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public void setupMotions(String physicsPath, String motionDirPath) {
-        setupPhysics(physicsPath);
-
+    private void setupPhysics() {
         try {
-            mMotionList = context.getAssets().list(motionDirPath);
-            mMotions = new Live2DMotion[mMotionList.length];
-
-            for (int i=0;i<mMotions.length;i++) {
-                InputStream in = context.getAssets().open( motionDirPath+ "/"+ mMotionList[i] ) ;
-                mMotions[i] = Live2DMotion.loadMotion( in ) ;
-                in.close() ;
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void setupPhysics(String physicsPath) {
-        try {
-            InputStream in = context.getAssets().open( physicsPath ) ;
+            InputStream in = context.getAssets().open( mSetting.getPhysics() ) ;
             physics = L2DPhysics.load(in);
             in.close();
         } catch (Exception e) {
@@ -85,13 +73,30 @@ public class MyL2DModel
         }
     }
 
+    private void setupMotions() {
+        try {
+            Map<String,String> motionPaths = mSetting.getMotions();
+            mMotions = new Live2DMotion[motionPaths.size()];
+
+            Iterator<String> iterator = motionPaths.keySet().iterator();
+            int count = 0;
+            while (iterator.hasNext()) {
+                String key = iterator.next();
+                InputStream in = context.getAssets().open( motionPaths.get(key) ) ;
+                mMotions[count] = Live2DMotion.loadMotion( in ) ;
+                in.close() ;
+                count++;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    //========================== Public Method =====================================================
+
     public void showMotion(int index) {
         if (mMotionMgr.isFinished())
             mMotionMgr.startMotion(mMotions[index], false);
-    }
-
-    public String[] getMotions() {
-        return mMotionList;
     }
 
     public void test(float angle) {
@@ -109,20 +114,17 @@ public class MyL2DModel
     //========================= SurfaceView Method =================================================
 
     public void onSurfaceCreated(GL10 gl) {
-        setupModel(gl);
+        setupTexure(gl);
     }
 
-    private void setupModel(GL10 gl) {
-        try
-        {
-            InputStream in = context.getAssets().open(mModelPath) ;
-            mLive2DModel = Live2DModelAndroid.loadModel(in) ;
-            in.close() ;
+    private void setupTexure(GL10 gl) {
+        try {
+            String[] texures = mSetting.getTexures();
 
-            for (int i = 0; i < mTexturePaths.length ; i++)
-            {
-                InputStream tin = context.getAssets().open(mTextureDirPath +"/"+ mTexturePaths[i]) ;
+            for (int i=0; i<texures.length ; i++) {
+                InputStream tin = context.getAssets().open(texures[i]) ;
                 int texNo = UtOpenGL.loadTexture(gl , tin , true) ;
+                //Log.d(TAG, i+" "+texNo);
                 mLive2DModel.setTexture(i , texNo) ;
             }
         } catch (IOException e) {
