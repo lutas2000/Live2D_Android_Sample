@@ -1,17 +1,26 @@
 package com.studio.rai.live2d2.live2d;
 
 import android.content.Context;
+import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 import android.media.AudioManager;
+import android.media.MediaPlayer;
 import android.media.SoundPool;
+import android.media.audiofx.Visualizer;
 import android.os.Build;
+import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
 import android.util.Log;
+
+import com.studio.rai.live2d2.R;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import javax.microedition.khronos.opengles.GL10;
@@ -28,6 +37,7 @@ import jp.live2d.motion.MotionQueueManager;
 public class MyL2DModel
 {
     private static final String TAG = MyL2DModel.class.getSimpleName();
+    private static final int TTS_SESSION_ID = 99;
 
     private Context context;
     private AssetManager assetManager;
@@ -47,6 +57,9 @@ public class MyL2DModel
     //Sound
     private SoundPool mSoundPool;
     private Map<String,Integer> sounds;
+    private Visualizer visualizer;
+    private TextToSpeech mTts;
+    private HashMap<String, String> mTtsParam;
 
     public MyL2DModel(Context context, L2DModelSetting setting) {
         this.context = context;
@@ -60,10 +73,66 @@ public class MyL2DModel
             mSoundPool = new SoundPool(1, AudioManager.STREAM_MUSIC, 5);
         }
 
+        initTTS();
+        initVisualizer();
+
         setupModel();
         setupPhysics();
         setupMotions();
         setupSounds();
+    }
+
+    private void initTTS() {
+        mTts = new TextToSpeech(context, new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int status) {
+                if(status != TextToSpeech.ERROR) {
+                    mTts.setLanguage(Locale.TAIWAN);
+
+                    mTts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+                        @Override
+                        public void onStart(String utteranceId) {
+                            visualizer.setEnabled(true);
+                        }
+
+                        @Override
+                        public void onDone(String utteranceId) {
+                            visualizer.setEnabled(false);
+                        }
+
+                        @Override
+                        public void onError(String utteranceId) {}
+                    });
+
+
+                    mTtsParam = new HashMap<>();
+                    mTtsParam.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "SOME MESSAGE");
+                    mTtsParam.put(TextToSpeech.Engine.KEY_PARAM_SESSION_ID, "99");
+                }
+            }
+        });
+    }
+
+    private void initVisualizer() {
+        visualizer = new Visualizer(TTS_SESSION_ID);
+        visualizer.setDataCaptureListener(new Visualizer.OnDataCaptureListener() {
+            @Override
+            public void onWaveFormDataCapture(Visualizer visualizer, byte[] waveform, int samplingRate) {}
+
+            @Override
+            public void onFftDataCapture(Visualizer visualizer, byte[] fft, int samplingRate) {
+                float sum = 0;
+
+
+                for(int i = 0; i < fft.length; i+=1) {
+                    sum += fft[i];
+                }
+                //Log.d(TAG, sum+"");
+                sum /= -600;
+
+                mLive2DModel.setParamFloat( "PARAM_MOUTH_OPEN_Y", sum ,1 );
+            }
+        }, 8000, true, true);
     }
 
     private void setupModel() {
@@ -130,12 +199,8 @@ public class MyL2DModel
         if (!sounds.containsKey(key))
             return;
         int soundID = sounds.get(key);
-        Log.d(TAG, "play sound: "+ soundID);
+        //Log.d(TAG, "play sound: "+ soundID);
         mSoundPool.play(soundID, 1f, 1f, 0, 0, 1f);
-    }
-
-    public void test(float angle) {
-        mLive2DModel.setParamFloat( "PARAM_ANGLE_Y", angle ,1 );
     }
 
     public void onTouch(int x, int y) {
@@ -144,6 +209,13 @@ public class MyL2DModel
 
         mLive2DModel.setParamFloat( "PARAM_ANGLE_X", angleX ,1 );
         mLive2DModel.setParamFloat( "PARAM_ANGLE_Y", angleY ,1 );
+        mLive2DModel.setParamFloat( "PARAM_EYE_BALL_X", angleY ,1 );
+
+    }
+
+    //對嘴
+    public void lipSynch(String text) {
+        mTts.speak(text, TextToSpeech.QUEUE_FLUSH, mTtsParam);
     }
 
     //========================= SurfaceView Method =================================================

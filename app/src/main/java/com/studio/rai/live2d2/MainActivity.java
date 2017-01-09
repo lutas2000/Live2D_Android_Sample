@@ -1,13 +1,23 @@
 package com.studio.rai.live2d2;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.DialogInterface;
+import android.content.pm.PackageManager;
+import android.media.audiofx.Visualizer;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
+import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
+import android.widget.EditText;
+import android.widget.Toast;
 
 import com.studio.rai.live2d2.live2d.L2DModelSetting;
 import com.studio.rai.live2d2.live2d.MyL2DModel;
@@ -15,6 +25,9 @@ import com.studio.rai.live2d2.live2d.MyL2DModel;
 import org.json.JSONException;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Locale;
 
 import jp.live2d.Live2D;
 
@@ -23,6 +36,7 @@ public class MainActivity extends Activity
     private static final String TAG = MainActivity.class.getSimpleName();
 
     private GLSurfaceView mGlSurfaceView;
+    private EditText et;
 
     private Live2DRender mLive2DRender;
     private L2DModelSetting mModelSetting;
@@ -36,10 +50,14 @@ public class MainActivity extends Activity
 
         Live2D.init();
         initView();
+
+
+
     }
 
     private void initView() {
         mGlSurfaceView = (GLSurfaceView) findViewById(R.id.main_glSurface);
+        et = (EditText) findViewById(R.id.main_et);
 
         setupLive2DModels();
         mGlSurfaceView.setRenderer(mLive2DRender);
@@ -75,14 +93,19 @@ public class MainActivity extends Activity
                 .show();
     }
 
-    float angle = -30f;
     public void test(View view) {
-        //mModel.showTexture();
+        String text = et.getText().toString();
+        if (text.isEmpty()) return;
+        mModel.lipSynch(text);
+    }
 
-        /*
-        Log.d(TAG, angle+"");
-        mModel.test(angle);
-        angle++;*/
+    private void tts() {
+        //String toSpeak = "臣亮言：先帝創業未半，而中道崩殂。今天下三分，益州疲弊，此誠危急存亡之秋也。";
+        //Toast.makeText(getApplicationContext(), toSpeak,Toast.LENGTH_SHORT).show();
+
+
+        //t1.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, null, null);
+        //t1.getVoice().
     }
 
     @Override

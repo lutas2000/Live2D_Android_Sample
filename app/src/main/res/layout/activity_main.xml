@@ -20,9 +20,18 @@
         android:onClick="motions"/>
 
     <Button
+        android:id="@+id/main_btn_lib"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_toRightOf="@id/main_btn_motion"
-        android:text="test"
+        android:text="對嘴"
         android:onClick="test"/>
+
+    <EditText
+        android:id="@+id/main_et"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        android:layout_toRightOf="@id/main_btn_lib"
+        android:background="#fff"/>
 </RelativeLayout>
